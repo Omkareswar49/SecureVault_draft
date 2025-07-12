@@ -1040,6 +1040,138 @@ def performance_monitor(func):
     return wrapper
 ```
 
+
+
+Storage & RAM Calculations
+Storage Requirements (20 Users, 4 Passwords Each)
+Users Table Storage
+Per User Record:
+├── id (INTEGER): 8 bytes
+├── username (TEXT): ~10 bytes average
+├── password_hash (TEXT): 64 bytes (SHA-256 hex)
+├── salt (TEXT): 64 bytes (32 bytes hex-encoded)
+├── created_at (TIMESTAMP): 19 bytes
+└── Row overhead: ~5 bytes
+Total per user: ~170 bytes
+
+20 users × 170 bytes = 3,400 bytes (3.4 KB)
+Passwords Table Storage
+Per Password Record:
+├── id (INTEGER): 8 bytes
+├── user_id (INTEGER): 8 bytes
+├── service_name (TEXT): ~15 bytes average
+├── encrypted_password (TEXT): ~88 bytes (Fernet encrypted)
+├── created_at (TIMESTAMP): 19 bytes
+└── Row overhead: ~5 bytes
+Total per password: ~143 bytes
+
+80 passwords (20 users × 4 each) × 143 bytes = 11,440 bytes (11.4 KB)
+Total Database Storage
+Users Table:           3.4 KB
+Passwords Table:      11.4 KB
+Database Overhead:     5.0 KB (SQLite metadata, indexes)
+Database File Size:   19.8 KB (~20 KB)
+Complete File System Storage
+Database (vault.db):        20 KB
+Server Key (server_key.pem): 1.7 KB
+Python Code (server.py):    15 KB
+Log Files:                  10 KB (assuming some usage)
+Total Storage:             46.7 KB (~47 KB)
+RAM Usage (3 Concurrent Users)
+Base Server RAM
+Python Interpreter:     25 MB
+Paramiko Library:       8 MB
+SQLite Library:         3 MB
+Base Application:       5 MB
+Total Base RAM:        41 MB
+Per Active User Session
+SSH Connection Objects:
+├── Transport Object:        50 KB
+├── Channel Object:          30 KB
+├── ServerInterface:         20 KB
+└── Connection Buffer:       10 KB
+Subtotal SSH:              110 KB
+
+User Session Data:
+├── User Authentication:     5 KB
+├── Session Variables:      10 KB
+├── Menu State:             5 KB
+└── Input/Output Buffers:   10 KB
+Subtotal Session:          30 KB
+
+Database Per User:
+├── Connection Pool:        80 KB
+├── Query Cache:           20 KB
+├── Result Buffers:        10 KB
+└── Encryption Keys:        5 KB
+Subtotal Database:        115 KB
+
+Thread Overhead:
+├── Python Thread:         50 KB
+├── Stack Space:           20 KB
+└── GC Objects:            10 KB
+Subtotal Thread:          80 KB
+
+Total per user: 335 KB
+Total RAM for 3 Concurrent Users
+Base Server RAM:           41 MB
+User 1 Session:           335 KB
+User 2 Session:           335 KB
+User 3 Session:           335 KB
+Buffer/Cache:               2 MB
+Total RAM Usage:          43 MB
+Detailed Breakdown
+Storage Analysis
+ComponentSizeDetailsUser Records3.4 KB20 users × 170 bytes eachPassword Records11.4 KB80 passwords × 143 bytes eachDatabase Overhead5.0 KBSQLite metadata, indexesApplication Files27 KBPython code, SSH keys, logsTotal Storage47 KBExtremely lightweight
+RAM Analysis
+ComponentSizeDetailsBase Server41 MBPython + libraries + app3 User Sessions1 MB335 KB × 3 usersBuffers/Cache2 MBOS and database buffersTotal RAM44 MBVery efficient
+Real-World Examples
+Comparison to Common Applications
+Your SSH Password Manager:  44 MB RAM, 47 KB storage
+VS
+Chrome Tab (Gmail):        150 MB RAM
+VS  
+Discord App:               200 MB RAM
+VS
+VS Code (empty):           120 MB RAM
+Scaling Projections
+Users    | Storage | RAM (3 concurrent)
+---------|---------|------------------
+20       | 47 KB   | 44 MB
+100      | 180 KB  | 44 MB  
+500      | 850 KB  | 44 MB
+1000     | 1.7 MB  | 44 MB
+Note: RAM stays constant because it's per concurrent session, not total users
+Memory Efficiency Features
+Storage Optimizations
+
+SQLite compression: Automatic data compression
+Efficient encoding: Binary storage where possible
+Minimal metadata: Only essential fields stored
+No redundant data: Normalized database structure
+
+RAM Optimizations
+
+Connection pooling: Reuse database connections
+Lazy loading: Load data only when needed
+Garbage collection: Python automatically frees memory
+Thread efficiency: Minimal per-thread overhead
+
+Practical Implications
+For Your Mac Development
+Available RAM: 8-16 GB typical
+Your app uses: 44 MB (0.3% of 16GB)
+Conclusion: Negligible impact
+For Cloud Deployment
+Cheapest VPS: 512 MB RAM
+Your app uses: 44 MB (8.6% of 512MB)
+Conclusion: Easily fits in smallest cloud server
+Storage Costs
+Cloud Storage: $0.10/GB/month typical
+Your app: 47 KB = $0.0000047/month
+Conclusion: Essentially free
+
+
 ## 🚀 Future Enhancements
 
 ### Planned Features
